@@ -1,0 +1,353 @@
+<!DOCTYPE html5>
+<html>
+	<head>
+		<title>YGO RPG</title>
+        
+        <meta charset="UTF-8" />
+        
+		<script src="lib/socket.io-1.4.5.js"></script>
+		<script src="lib/jquery.js"></script>
+        
+        <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet"> 
+        
+        <!-- Bootstrap 4 -->
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
+        <script src="https://code.jquery.com/jquery-3.1.1.slim.min.js" integrity="sha384-A7FZj7v+d/sdmMqp/nOQwliLvUsJfDHW+k9Omg/a/EheAdgtzNs3hpfag6Ed950n" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js" integrity="sha384-DztdAPBWPRXSA/3eYEEUWrWCy7G5KFbe8fFjk5JAIxUYHKkDx6Qin1DkWx51bBrb" crossorigin="anonymous"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn" crossorigin="anonymous"></script>
+
+        
+		<script src="gameObject.js"></script>
+        <script src="prefabTemplate.js"></script>
+        
+        <style>
+            #prefabList > * {
+                cursor:pointer;
+            }
+            #rightTab_nav_prefab {
+                cursor:pointer;
+            }
+            #rightTab_nav_console {
+                cursor:pointer;
+            }
+            #rightTab_nav_objectInspector {
+                cursor:pointer;
+            }
+        </style>
+        
+	</head>
+	<body>
+        <div style="width:100%">
+            <canvas id="gameCanvas" tabindex="1" oncontextmenu="return false;">
+        
+            </canvas>
+        </div>
+	</body>
+    
+    <script> // Define variables for component initialization
+        var isServer = false;
+        
+        function log(data) { // log to console
+            var now = new Date();
+            data = ("[" + ("0"+now.getHours()).substr(-2) + ':' + ("0"+now.getMinutes()).substr(-2) + ":" + ("0"+now.getSeconds()).substr(-2) + "] ") + data;
+            console.log(data);
+        }
+        
+		var canvas = document.getElementById("gameCanvas");
+		var ctx = canvas.getContext("2d");
+		
+		var objectList = [];
+        var prefabList = {};
+        var myPlayerInfo = {};
+        
+        function getObjectFromId(id) {
+            for(var obj of objectList) {
+                if(obj.id == id) return obj;
+            }
+            return null;
+        }
+        
+        function generateNewId() {
+            // generate new id in form [Player id]_[Integer]
+            if(myPlayerInfo.id == null) {
+                log("ID generation request when playerInfo is not ready");
+                return "GG";
+            }
+            return ""+myPlayerInfo.id+"_"+(idGenerator++);
+        }
+    </script>
+    
+    <!-- Include components -->
+    <script src="components/Component.js"></script>
+    
+    <script src="components/ComponentTransform.js"></script>
+    <script src="components/ComponentTransformTween.js"></script>
+    <script src="components/ComponentNetwork.js"></script>
+    
+    <script src="components/ComponentTabletopObject.js"></script>
+    <script src="components/ComponentObjectInHand.js"></script>
+    <script src="components/ComponentObjectStack.js"></script>
+    
+    <script src="components/ComponentCursorCollider.js"></script>
+    
+    <script src="components/ComponentRenderer.js"></script>
+    <script src="components/ComponentImageRenderer.js"></script>
+    <script src="components/ComponentRectRenderer.js"></script>
+    <script src="components/ComponentTextRenderer.js"></script>
+    <script src="components/ComponentImageRendererMulti.js"></script>
+    
+    <script src="components/ComponentAutoDestroy.js"></script>
+    
+    <script src="components/RPG/RPG_ComponentHealth.js"></script>
+    <script src="components/RPG/RPG_ComponentAttack.js"></script>
+    <script src="components/RPG/RPG_ComponentEnemy.js"></script>
+    <script src="components/RPG/RPG_ComponentPlayerControllable.js"></script>
+    <script src="components/RPG/RPG_ComponentDropTable.js"></script>
+    
+    
+    <script src="objectInspector.js"></script>
+    <!-- End include components -->
+    
+	<script>
+        
+        /// Debug function / Temp function
+        var fpsCount = 0;
+        window.setInterval(()=>{
+            fpsCount = 0;
+        },1000);
+        
+        var globalRotation = 0;
+        function setGlobalRotation(angle) {
+            globalRotation = angle;
+            log("Global rotation set to : "+globalRotation);
+        }
+        
+        function sortObjectList() { // Low Z -> High Z
+            objectList.sort((a,b)=>{
+                var ta = a.getEnabledComponent(ComponentTransform);
+                var tb = b.getEnabledComponent(ComponentTransform);
+                if(ta.pos.z < tb.pos.z) return -1;
+                else if(ta.pos.z == tb.pos.z) return 0;
+                return 1;
+            })
+        }
+        var idGenerator = 0;
+
+        /// Socket events
+		var socket = io();
+
+        socket.on('connect',function() { // Reset everything
+            log("Connected");
+            objectList = [];
+            prefabList = {}; $("#prefabList").html("");
+            myPlayerInfo = {};
+            selectingObject = new Set();
+            objectInspector = new ObjectInspector(CardBuilder);
+        });
+        
+		socket.on('log',function (data) {
+            log(data);
+		});
+        
+        socket.on('newPrefab',function (data) {
+            var prefab = new EmptyPrefab();
+            prefab.fromJSON(data)
+            prefabList[prefab.id] = prefab;
+        });
+        
+        socket.on('newObject',function(data) {
+            var obj = new GameObject();
+            obj.fromJSON(data);
+            objectList.push(obj);
+            sortObjectList();
+        });
+        
+        socket.on('updateObject',function(data) {
+            // update object of that id
+            getObjectFromId(data.id).getEnabledComponent(ComponentNetwork).onNetworkUpdate(data);
+        });
+        
+        socket.on('deleteObject',function(id) {
+            var obj = getObjectFromId(id);
+            obj.destroy();
+            if(selectingObject.has(obj)) selectingObject.delete(obj);
+            objectList.splice(objectList.indexOf(obj),1);
+        });
+        
+        socket.on('setPlayerInfo',function(data) {
+            log("My player ID : "+data.id);
+            myPlayerInfo = data;
+        });
+		
+        function createObjectFromPrefab(prefab) {
+            var obj = prefab.instantiate();
+            obj.getEnabledComponent(ComponentTransform).setPos({
+                x : canvasX + canvas.width/2,
+                y : canvasY + canvas.height/2
+            })
+            return obj;
+        }
+        
+        var objectInspector = new ObjectInspector(CardBuilder);
+        
+		function update(timestamp) {
+            // setup canvas
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+            
+            // set width and height
+            /*canvas.width = $(canvas.parentNode).innerWidth();
+            canvas.height = canvas.width / (4/3);
+            $(canvas).css("width",canvas.width);
+            $(canvas).css("height",canvas.height);*/
+            
+            // setup global position
+            ctx.save();
+            ctx.translate(  -((canvasX+canvas.width/2)*canvasScale - canvas.width/2),
+                            -((canvasY+canvas.height/2)*canvasScale - canvas.height/2));
+            ctx.scale(canvasScale,canvasScale);
+            ctx.rotate(this.globalRotation*Math.PI/180);
+            $("#debugCanvasPos").html("Canvas position = "+Math.floor(canvasX)+","+Math.floor(canvasY)+" (scale "+Math.round(canvasScale*100)/100+")");
+            // update every object
+			for(var obj of objectList) obj.update(timestamp);
+			
+            ctx.restore();
+            
+            fpsCount++;
+            
+            window.requestAnimationFrame(update);
+		}
+		
+		window.requestAnimationFrame(update);
+		
+		// canvas controller
+        var canvasScale = 1;
+        var canvasX = 0; // in default scale
+        var canvasY = 0; // in default scale
+        
+        canvas.width = document.body.clientWidth;
+        canvas.height = document.body.clientHeight;
+        $(canvas).css("width",canvas.width);
+        $(canvas).css("height",canvas.height);
+        
+		canvas.addEventListener("mousewheel", mouseWheelHandler, false);
+		canvas.addEventListener("DOMMouseScroll", mouseWheelHandler, false);
+        function mouseWheelHandler(e) {
+            e.preventDefault();
+            var e = window.event || e; // old IE support
+            var delta = Math.max(-1, Math.min(1, (e.wheelDelta || -e.detail)));
+            if(delta < 0) {
+                canvasScale /= 1.25;
+            }
+            else {
+                canvasScale *= 1.25;
+            }
+        }
+        
+        var mouseLastPos = {x:0,y:0,down:false};
+        var selectingObject = new Set();
+        
+        function onMouseDown(e) {
+            if(e.button != 0) return true; // only capture left click
+            e.preventDefault();
+            canvas.focus();
+
+            mouseLastPos = {
+                x           : e.pageX - $(canvas).offset().left,
+                y           : e.pageY - $(canvas).offset().top,
+                down        : true,
+                move        : false,
+                moveLength  : 0,
+                isMovingObject : false
+            }
+            var clickPos = {
+                x : canvasX + canvas.width/2 + (mouseLastPos.x-canvas.width/2)/canvasScale,
+                y : canvasY + canvas.height/2 + (mouseLastPos.y-canvas.height/2)/canvasScale
+            }
+            for(var obj of selectingObject)
+                if(obj.getEnabledComponent(ComponentCursorCollider) && obj.getEnabledComponent(ComponentCursorCollider).isOver(clickPos))
+                    mouseLastPos.isMovingObject = true;
+        }
+        canvas.addEventListener("mousedown",onMouseDown);
+        
+        function onMouseMove(e) {
+            if(!mouseLastPos.down) return;
+            var offX = e.pageX - $(canvas).offset().left - mouseLastPos.x;
+            var offY = e.pageY - $(canvas).offset().top - mouseLastPos.y;
+            // rotate offX , offY with globalRotation
+            if(mouseLastPos.isMovingObject) {
+                for(var obj of selectingObject) {
+                    let transform = obj.getEnabledComponent(ComponentTransform);
+                    if(transform) {
+                        transform.setPos({
+                            x : transform.pos.x + (Math.cos(globalRotation * Math.PI / 180)*offX + Math.sin(globalRotation * Math.PI / 180)*offY) / canvasScale,
+                            y : transform.pos.y + (- Math.sin(globalRotation * Math.PI / 180)*offX + Math.cos(globalRotation * Math.PI / 180)*offY) / canvasScale
+                        })
+                    }
+                }
+            }
+            else {
+                canvasX -= offX / canvasScale;
+                canvasY -= offY / canvasScale;
+            }
+            mouseLastPos.x = e.pageX - $(canvas).offset().left;
+            mouseLastPos.y = e.pageY - $(canvas).offset().top;
+            mouseLastPos.move = true;
+            mouseLastPos.moveLength += Math.abs(offX+offY) + mouseLastPos.moveLength;
+        }
+        canvas.addEventListener("mousemove",onMouseMove);
+        
+        function onMouseUp(e) {
+            if(e.button != 0) return true; // only capture left click
+            
+            mouseLastPos.down = false;
+            var clickPos = {
+                x : canvasX + canvas.width/2 + (mouseLastPos.x-canvas.width/2)/canvasScale,
+                y : canvasY + canvas.height/2 + (mouseLastPos.y-canvas.height/2)/canvasScale
+            }
+            if(!mouseLastPos.isMovingObject && mouseLastPos.moveLength <= 5) { // click !
+                if(!isKeyDown[16]) selectingObject.clear();
+                for(var i = objectList.length-1;i >= 0;i--) { // Select from high Z to low Z item
+                    var obj = objectList[i];
+                    if(obj.getEnabledComponent(ComponentCursorCollider) && obj.getEnabledComponent(ComponentCursorCollider).isOver(clickPos)) {
+                        // click on this object
+                        selectingObject.add(obj);
+                        break;
+                    }
+                }
+            }
+            if(mouseLastPos.isMovingObject) { // drop object
+                // check if drop on top of something
+                for(var i = objectList.length-1;i >= 0;i--) { // Select from high Z to low Z item
+                    var obj = objectList[i];
+                    if(selectingObject.has(obj)) continue;
+                    if(obj.getEnabledComponent(ComponentCursorCollider) && obj.getEnabledComponent(ComponentCursorCollider).isOver(clickPos)) {
+                        // drop item on this obj
+                        obj.onObjectDrop(selectingObject);
+                        break;
+                    }
+                }
+            }
+        }
+        canvas.addEventListener("mouseup",onMouseUp);
+        
+        var isKeyDown = {};
+        canvas.addEventListener("keydown",function (e) {
+            e = e || window.event; 
+            var charCode = e.charCode || e.keyCode;
+            isKeyDown[charCode] = true;
+        });
+        canvas.addEventListener("keyup",function (e) {
+            e = e || window.event; 
+            var charCode = e.charCode || e.keyCode;
+            isKeyDown[charCode] = false;
+        });
+        canvas.addEventListener("keypress",function (e) {
+            e = e || window.event; 
+            var charCode = e.charCode || e.keyCode;
+            for(var obj of selectingObject) {
+                obj.onKeyPress(charCode);
+            }
+        });
+	
+	</script>
+</html>
