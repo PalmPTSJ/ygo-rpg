@@ -19,9 +19,9 @@ class Component extends Base {
     }
     fromJSON(data) {
         super.fromJSON(data);
-        if(data.id) this.id = data.id;
-        if(data.enabled) this.enabled = data.enabled;
-        if(data.name) this.name = data.name;
+        if(data.id !== undefined) this.id = data.id;
+        if(data.enabled !== undefined) this.enabled = data.enabled;
+        if(data.name !== undefined) this.name = data.name;
         return this;
     }
     onStart() {

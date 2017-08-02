@@ -101,6 +101,7 @@
     <script src="components/RPG/RPG_ComponentHealth.js"></script>
     <script src="components/RPG/RPG_ComponentAttack.js"></script>
     <script src="components/RPG/RPG_ComponentEnemy.js"></script>
+    <script src="components/RPG/RPG_ComponentPlayer.js"></script>
     <script src="components/RPG/RPG_ComponentPlayerControllable.js"></script>
     <script src="components/RPG/RPG_ComponentDropTable.js"></script>
     
@@ -109,6 +110,8 @@
     <!-- End include components -->
     
 	<script>
+        
+        var playerObject = null;
         
         /// Debug function / Temp function
         var fpsCount = 0;
@@ -142,7 +145,20 @@
             prefabList = {}; $("#prefabList").html("");
             myPlayerInfo = {};
             selectingObject = new Set();
-            objectInspector = new ObjectInspector(CardBuilder);
+            
+            // login
+            let username = prompt("Username","PalmPTSJ");
+            socket.emit('login',{username:username});
+            
+        });
+        
+        socket.on('setPlayerObject',function(data) {
+            log("My player object is "+data.id);
+            selectingObject.add(getObjectFromId(data.id)); // always select player object
+            
+            playerObject = getObjectFromId(data.id);
+            playerObject.getEnabledComponent(RPG_ComponentPlayer).online = true;
+            console.log("Player Object",playerObject);
         });
         
 		socket.on('log',function (data) {

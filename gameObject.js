@@ -67,6 +67,13 @@ class EmptyPrefab extends Base {
         return toRet;
     }
     
+    getComponentByName(name) {
+        for(var comp of this.components) {
+            if(comp.name == name) return comp;
+        }
+        return null;
+    }
+    
     getComponent(clazz) {
         for(var comp of this.components) {
             if(comp instanceof clazz) return comp;
@@ -79,7 +86,6 @@ class EmptyPrefab extends Base {
         }
         return null;
     }
-    
     getComponents(clazz) {
         var toRet = [];
         for(var comp of this.components) {

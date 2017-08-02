@@ -198,6 +198,20 @@ io.on('connection',function (socket) {
 	});
 	socket.on('disconnect',function () {
 		log(getDebugName(socket)+" disconnected");
+        
+        // do logout
+        if(socket.loginData !== undefined) {
+            console.log(socket.loginData);
+            for(let obj of objectList) {
+                if( obj.getEnabledComponent(RPG_ComponentPlayer) && 
+                    obj.getEnabledComponent(RPG_ComponentPlayer).username == socket.loginData.username) 
+                {
+                    obj.getEnabledComponent(RPG_ComponentPlayer).onLogout();
+                    console.log("Found",obj);
+                }
+            }
+        }
+        
 	});
 	
     /// Game Event ///
@@ -235,6 +249,34 @@ io.on('connection',function (socket) {
     socket.on('loadGame',function (filename) {
         loadGame(filename);
     });
+    
+    /// RPG Events ///
+    socket.on('login', function(data) {
+        // data => {username}
+        socket.loginData = data;
+        log("New user login : "+data.username);
+        // check if there exists player with username
+        let exists = false;
+        for(let obj of objectList) {
+            if( obj.getEnabledComponent(RPG_ComponentPlayer) && 
+                obj.getEnabledComponent(RPG_ComponentPlayer).username == socket.loginData.username) 
+            {
+                socket.emit('setPlayerObject',{id : obj.id});
+                obj.getEnabledComponent(RPG_ComponentPlayer).online = true;
+                exists = true;
+                break;
+            }
+        }
+        if(!exists) {
+            // create new player
+            let player = playerPrefab.instantiate();
+            player.getEnabledComponent(RPG_ComponentPlayer).username = data.username;
+            player.getEnabledComponent(RPG_ComponentPlayer).online = true;
+            player.getComponentByName("playerNameRenderer").text = data.username;
+            let id = server_createObject(player.toJSON());
+            socket.emit('setPlayerObject',{id : id});
+        }
+    });
 });
 
 function update() {
@@ -245,3 +287,20 @@ function update() {
 }
 
 var gameInterval = setInterval(update,1000/60);
+
+
+var playerPrefab = new Prefab();
+playerPrefab.getComponent(ComponentTransform).fromJSON({
+    pos     : {x:0,y:0,z:2},
+    size    : {width:40,height:40}
+});
+playerPrefab.addComponent((new ComponentRectRenderer()).fromJSON({
+    color : "#00AA00"
+}));
+playerPrefab.addComponent((new ComponentTextRenderer("playerNameRenderer")).fromJSON({
+    text : "???",
+    font : "16px Arial"
+}));
+playerPrefab.addComponent(new RPG_ComponentPlayer());
+playerPrefab.addComponent(new RPG_ComponentHealth());
+playerPrefab.addComponent(new RPG_ComponentAttack());
