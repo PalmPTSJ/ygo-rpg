@@ -72,6 +72,40 @@ class Component extends Base {
         }
     }
     
+    callOnOwner(func,params) {
+        // issue func call on owner
+        if(isServer) {
+            if(this.gameObject.ownerId == null) {
+                // server is the owner
+                this[func](params);
+            }
+            else {
+                // call client
+                if(playerMap[this.gameObject.ownerId] != undefined) {
+                    playerMap[this.gameObject.ownerId].socket.emit('callOnOwner',{
+                        objId   : this.gameObject.id,
+                        compId  : this.id,
+                        func    : func,
+                        params  : params
+                    });
+                }
+                else {
+                    log("Can't find owner of "+this.gameObject.id+" ("+this.gameObject.ownerId+")");
+                }
+            }
+        }
+        else {
+            // relay this to server (let server decide the owner)
+            socket.emit('callOnOwner',{
+                objId   : this.gameObject.id,
+                compId  : this.id,
+                func    : func,
+                params  : params
+            });
+        }
+        
+    }
+    
     disableForThisFrame(timestamp) {
         // disable this component for this frame
         this.disabledForAFrame = true;

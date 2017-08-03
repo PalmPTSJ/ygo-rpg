@@ -4,6 +4,9 @@ class RPG_ComponentPlayer extends Component {
         
         this.username = ""; // bind with login data
         this.online = false;
+        
+        this.server_socket = null; // [Server] Reference to owner's socket
+        
     }
     toJSON() {
         return Object.assign(super.toJSON(),{
@@ -29,13 +32,13 @@ class RPG_ComponentPlayer extends Component {
             });
         }
         
-        if(playerObject == this.gameObject) {
+        if(playerObject != null && playerObject == this.gameObject) {
+            this.online = true;
+            this.gameObject.ownerId = myPlayerInfo.id;
             // owner
             let transform = this.gameObject.getEnabledComponent(ComponentTransform);
-            //console.log("A");
             if(isKeyDown['A'.charCodeAt(0)]) {
                 transform.pos.x -= 5;
-                
             }
             if(isKeyDown['S'.charCodeAt(0)]) {
                 transform.pos.y += 5;
@@ -46,13 +49,18 @@ class RPG_ComponentPlayer extends Component {
             if(isKeyDown['W'.charCodeAt(0)]) {
                 transform.pos.y -= 5;
             }
+            
+            // move camera to follow
+            canvasX = (transform.pos.x - canvas.width/2 + transform.size.width/2);
+            canvasY = (transform.pos.y - canvas.height/2  + transform.size.height/2);
         }
         
         return true;
     }
     
-    onLogout() {
+    onLogout() { // server
         this.online = false;
+        this.server_socket = null;
     }
     
     onKeyDown(key) {
@@ -63,3 +71,29 @@ class RPG_ComponentPlayer extends Component {
 }
 
 classList["RPG_ComponentPlayer"] = RPG_ComponentPlayer;
+
+if(!isServer) {
+    function onMouseDown_player(e) {
+        if(e.button != 0) return true; // only capture left click
+        var clickPos = {
+            x : canvasX + canvas.width/2 + ((e.pageX - $(canvas).offset().left)-canvas.width/2)/canvasScale,
+            y : canvasY + canvas.height/2 + ((e.pageY - $(canvas).offset().top)-canvas.height/2)/canvasScale
+        }
+        console.log("MD",clickPos);
+        
+        for(var i = objectList.length-1;i >= 0;i--) { // Select from high Z to low Z item
+            var obj = objectList[i];
+            if(obj.getEnabledComponent(ComponentCursorCollider) && obj.getEnabledComponent(ComponentCursorCollider).isOver(clickPos)) {
+                // click on this object , attack !
+                if(obj.getEnabledComponent(RPG_ComponentHealth) == null) continue; // Can only attack object with health
+                
+                // just attack (test)
+                console.log("ATTACK",obj);
+                obj.getEnabledComponent(RPG_ComponentHealth).callOnOwner('takeDamage',10);
+
+                break;
+            }
+        }
+    }
+    canvas.addEventListener("mousedown",onMouseDown_player);
+}

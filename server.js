@@ -37,10 +37,11 @@ function log(data) { // global log (both on server and client)
     io.emit('log',data);
     localLog(data);
 }
-function getDebugName(socket) { return "<"+socket.name+":"+socket.id+">"; }
+function getDebugName(socket) { return "<"+socket.playerData.name+":"+socket.playerData.id+">"; }
 
 var objectList = [];
 var prefabList = {};
+var playerMap = {};
 
 var objectIdGenerator = 0;
 var prefabIdGenerator = 0;
@@ -73,7 +74,7 @@ global.Image = class {
 };
 global.socket = io;
 
-global.server_createPrefab = function(data) {
+global.createPrefab = function(data) {
     if(data.id == null) {
         let id = "SP_"+(prefabIdGenerator++);
         data.id = id;
@@ -89,7 +90,7 @@ global.server_createPrefab = function(data) {
     return data.id;
 }
 
-global.server_createObject = function(data) {
+global.createObject = function(data) {
     if(data.id == null) {
         let id = "SO_"+(objectIdGenerator++);
         data.id = id;
@@ -104,7 +105,7 @@ global.server_createObject = function(data) {
     
     return data.id;
 }
-global.server_deleteObject = function(id) {
+global.deleteObject = function(id) {
     for(let i = 0;i < objectList.length;i++) {
         if(objectList[i].id == id) {
             // delete
@@ -153,13 +154,13 @@ function loadGame(filename) {
     // load prefabs
     let prefabData = data.prefab;
     for(let id in prefabData) {
-        global.server_createPrefab(prefabData[id]);
+        global.createPrefab(prefabData[id]);
     }
     
     // load objects
     let objectData = data.object;
     for(let obj of objectData) {
-        global.server_createObject(obj);
+        global.createObject(obj);
     }
     
     // load other parameters
@@ -176,13 +177,18 @@ if(program.load) {
 
 localLog("Server ready !");
 io.on('connection',function (socket) {
-    
 	log("New connection from "+socket.request.connection.remoteAddress);
-    socket.name = "anonymous"+playerIdGenerator; // default name
-    socket.emit('setPlayerInfo',{
+    
+    let playerData = {
         id : playerIdGenerator++ ,
-        name : socket.name
-    });
+        name : socket.name,
+        socket : socket
+    }
+    socket.emit('setPlayerInfo',{id : playerData.id, name : playerData.name});
+    
+    socket.playerData = playerData;
+    playerMap[playerData.id] = playerData;
+    
     // send all object and prefab
     for(var id in prefabList) {
         socket.emit('newPrefab',prefabList[id].toJSON());
@@ -193,21 +199,19 @@ io.on('connection',function (socket) {
     
     /// Players Event ///
 	socket.on('setName',function (name) {
-		socket.name = name; 
+		socket.playerData.name = name; 
 		log(getDebugName(socket)+" change name to : "+name);
 	});
 	socket.on('disconnect',function () {
 		log(getDebugName(socket)+" disconnected");
-        
+        delete playerMap[socket.playerData.id];
         // do logout
         if(socket.loginData !== undefined) {
-            console.log(socket.loginData);
             for(let obj of objectList) {
                 if( obj.getEnabledComponent(RPG_ComponentPlayer) && 
                     obj.getEnabledComponent(RPG_ComponentPlayer).username == socket.loginData.username) 
                 {
                     obj.getEnabledComponent(RPG_ComponentPlayer).onLogout();
-                    console.log("Found",obj);
                 }
             }
         }
@@ -216,10 +220,10 @@ io.on('connection',function (socket) {
 	
     /// Game Event ///
 	socket.on('createPrefab',function (data) {
-        global.server_createPrefab(data);
+        global.createPrefab(data);
 	});
 	socket.on('createObject',function (data) {
-        global.server_createObject(data);
+        global.createObject(data);
 	});
     socket.on('updateObject',function (data) {
         let obj = getObjectFromId(data.id);
@@ -238,8 +242,18 @@ io.on('connection',function (socket) {
             }
         }
     });
+    socket.on('callOnOwner',function(data) { // [Client --> Server] relay call to client (or server) who is the owner
+        var obj = getObjectFromId(data.objId);
+        if(obj == null) return;
+        for(var comp of obj.components) {
+            if(comp.id == data.compId) {
+                comp.callOnOwner(data.func,data.params);
+                break;
+            }
+        }
+    });
     socket.on('deleteObject',function (id) {
-        global.server_deleteObject(id);
+        global.deleteObject(id);
     });
     
     /// Server Events ///
@@ -262,7 +276,7 @@ io.on('connection',function (socket) {
                 obj.getEnabledComponent(RPG_ComponentPlayer).username == socket.loginData.username) 
             {
                 socket.emit('setPlayerObject',{id : obj.id});
-                obj.getEnabledComponent(RPG_ComponentPlayer).online = true;
+                obj.getEnabledComponent(RPG_ComponentPlayer).server_socket = socket;
                 exists = true;
                 break;
             }
@@ -271,9 +285,10 @@ io.on('connection',function (socket) {
             // create new player
             let player = playerPrefab.instantiate();
             player.getEnabledComponent(RPG_ComponentPlayer).username = data.username;
-            player.getEnabledComponent(RPG_ComponentPlayer).online = true;
             player.getComponentByName("playerNameRenderer").text = data.username;
-            let id = server_createObject(player.toJSON());
+            let id = createObject(player.toJSON());
+            getObjectFromId(id).getEnabledComponent(RPG_ComponentPlayer).server_socket = socket;
+            
             socket.emit('setPlayerObject',{id : id});
         }
     });
@@ -288,19 +303,26 @@ function update() {
 
 var gameInterval = setInterval(update,1000/60);
 
-
+// create prefab
 var playerPrefab = new Prefab();
 playerPrefab.getComponent(ComponentTransform).fromJSON({
     pos     : {x:0,y:0,z:2},
-    size    : {width:40,height:40}
+    size    : {width:60,height:40}
 });
-playerPrefab.addComponent((new ComponentRectRenderer()).fromJSON({
-    color : "#00AA00"
+playerPrefab.addComponent((new ComponentImageRenderer()).fromJSON({
+    url : "https://static.giantbomb.com/uploads/original/0/4389/1263712-yami_yugi.gif"
 }));
 playerPrefab.addComponent((new ComponentTextRenderer("playerNameRenderer")).fromJSON({
     text : "???",
     font : "16px Arial"
 }));
+
+playerPrefab.addComponent(new ComponentCursorCollider());
+
 playerPrefab.addComponent(new RPG_ComponentPlayer());
+playerPrefab.addComponent(new RPG_ComponentUIRenderer());
+
 playerPrefab.addComponent(new RPG_ComponentHealth());
+playerPrefab.addComponent(new RPG_ComponentHealthRenderer());
+
 playerPrefab.addComponent(new RPG_ComponentAttack());

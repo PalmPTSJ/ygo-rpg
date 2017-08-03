@@ -129,6 +129,8 @@ class EmptyPrefab extends Base {
 class GameObject extends EmptyPrefab {
     constructor() {
         super("");
+        
+        this.ownerId = null;
     }
     update(timestamp) {
         for(var comp of this.components) {

@@ -43,7 +43,7 @@ class RPG_ComponentDropTable extends Component {
                         z : myPos.z
                     });
                     
-                    server_createObject(obj.toJSON());
+                    createObject(obj.toJSON());
                 }
             }
         }

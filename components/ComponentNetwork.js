@@ -12,7 +12,6 @@ class ComponentNetwork extends Component {
         return this;
     }
     onNetworkUpdate(data) {
-        console.log(this.gameObject,"ON NET UPDATE");
         this.gameObject.fromJSON(data);
         this.lastJSON = JSON.stringify(this.gameObject.toJSON()); // force sync
     }

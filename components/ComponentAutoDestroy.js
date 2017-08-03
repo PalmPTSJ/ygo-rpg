@@ -19,7 +19,7 @@ class ComponentAutoDestroy extends Component {
         this.countdown--;
         if(this.countdown <= 0) {
             // destroy
-            server_deleteObject(this.gameObject.id);
+            deleteObject(this.gameObject.id);
         }
     }
 }

@@ -25,36 +25,11 @@ class RPG_ComponentHealth extends Component {
     onUpdate(timestamp) {
         if(!super.onUpdate(timestamp)) return false;
         
-        let transform = this.gameObject.getEnabledComponent(ComponentTransform);
-        
-        // draw health bar
-        ctx.save();
-        transform.setupCanvas();
-        
-        ctx.globalAlpha = 1;
-        ctx.lineWidth=10;
-        
-        ctx.strokeStyle = "#F00";
-        ctx.beginPath();
-        ctx.moveTo(0,-20);
-        ctx.lineTo(transform.size.width,-20);
-        ctx.stroke();
-        
-        ctx.strokeStyle = "#0F0";
-        ctx.beginPath();
-        ctx.moveTo(0,-20);
-        ctx.lineTo(transform.size.width * this.HP / this.maxHP,-20);
-        ctx.stroke();
-        
-        ctx.restore();
-        
         return true;
         
     }
     
     takeDamage(dmg) {
-        if(!isServer) return;
-        
         this.HP -= dmg;
         // create damage text
         let myPos = this.gameObject.getEnabledComponent(ComponentTransform).pos;
@@ -71,9 +46,9 @@ class RPG_ComponentHealth extends Component {
         
         obj.getEnabledComponent(ComponentTextRenderer).text = ""+dmg;
         
-        server_createObject(obj.toJSON());
+        createObject(obj.toJSON());
         
-        if(this.HP <= 0) server_deleteObject(this.gameObject.id);
+        if(this.HP <= 0) deleteObject(this.gameObject.id);
         
     }
 
@@ -89,16 +64,14 @@ class RPG_ComponentHealth extends Component {
     }  
 }
 
-if(isServer) {
-    RPG_ComponentHealth.DamageTextPrefab = new EmptyPrefab("Damage Text");
-    RPG_ComponentHealth.DamageTextPrefab.addComponent(new ComponentTransformTween().fromJSON({
-        moveSpeed : 3
-    }));
-    RPG_ComponentHealth.DamageTextPrefab.addComponent(new ComponentNetwork());
-    RPG_ComponentHealth.DamageTextPrefab.addComponent(new ComponentTextRenderer());
-    RPG_ComponentHealth.DamageTextPrefab.addComponent((new ComponentAutoDestroy()).fromJSON({
-        countdown : 60
-    }));
-}
+RPG_ComponentHealth.DamageTextPrefab = new EmptyPrefab("Damage Text");
+RPG_ComponentHealth.DamageTextPrefab.addComponent(new ComponentTransformTween().fromJSON({
+    moveSpeed : 3
+}));
+RPG_ComponentHealth.DamageTextPrefab.addComponent(new ComponentNetwork());
+RPG_ComponentHealth.DamageTextPrefab.addComponent(new ComponentTextRenderer());
+RPG_ComponentHealth.DamageTextPrefab.addComponent((new ComponentAutoDestroy()).fromJSON({
+    countdown : 60
+}));
 
 classList["RPG_ComponentHealth"] = RPG_ComponentHealth;
