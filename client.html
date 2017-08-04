@@ -59,6 +59,8 @@
         var prefabList = {};
         var myPlayerInfo = {};
         
+        var idGenerator = 0;
+        
         function getObjectFromId(id) {
             for(var obj of objectList) {
                 if(obj.id == id) return obj;
@@ -69,8 +71,7 @@
         function generateNewId() {
             // generate new id in form [Player id]_[Integer]
             if(myPlayerInfo.id == null) {
-                log("ID generation request when playerInfo is not ready");
-                return "GG";
+                return "unknown_"+(idGenerator++);
             }
             return ""+myPlayerInfo.id+"_"+(idGenerator++);
         }
@@ -137,7 +138,6 @@
                 return 1;
             })
         }
-        var idGenerator = 0;
 
         /// Socket events
 		var socket = io();
@@ -173,6 +173,7 @@
         });
         socket.on('newObject',function(data) {
             let obj = new GameObject();
+            console.log("New Obj",data);
             obj.fromJSON(data);
             objectList.push(obj);
             sortObjectList();
@@ -188,6 +189,7 @@
             objectList.splice(objectList.indexOf(obj),1);
         });
         socket.on('callOnOwner',function(data) { // [SERVER --> CLIENT] call the function on this client (owner)
+            console.log("Receive callOnOwner",data);
             let obj = getObjectFromId(data.objId);
             if(obj == null) return;
             for(var comp of obj.components) {
@@ -309,8 +311,8 @@
                 }
             }
             else {
-                canvasX -= offX / canvasScale;
-                canvasY -= offY / canvasScale;
+                /*canvasX -= offX / canvasScale;
+                canvasY -= offY / canvasScale;*/
             }
             mouseLastPos.x = e.pageX - $(canvas).offset().left;
             mouseLastPos.y = e.pageY - $(canvas).offset().top;

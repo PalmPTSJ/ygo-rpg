@@ -2,21 +2,7 @@ class RPG_ComponentHealthRenderer extends ComponentRenderer {
     constructor(name) {
         super();
     }
-    /*toJSON() {
-        return Object.assign(super.toJSON(),{
-            username : this.username,
-            online : this.online
-        });
-    }
-    fromJSON(data) {
-        super.fromJSON(data);
-        
-        if(data.username !== undefined) this.username = data.username;
-        if(data.online !== undefined) this.online = data.online;
-        
-        return this;
-    }*/
-    
+
     render() {
         let health = this.gameObject.getEnabledComponent(RPG_ComponentHealth);
         
@@ -48,7 +34,6 @@ class RPG_ComponentHealthRenderer extends ComponentRenderer {
         if(player && playerObject == player.gameObject) {
             ctx.save();
             ctx.resetTransform();
-            
             
             ctx.lineWidth=30;
             ctx.strokeStyle = "#424242";

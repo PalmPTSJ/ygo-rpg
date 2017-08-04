@@ -3,8 +3,8 @@
 class RPG_ComponentHealth extends Component {
     constructor(name) {
         super(name);
-        this.HP = 200;
-        this.maxHP = 200;
+        this.HP = 500;
+        this.maxHP = 500;
     }
     
     toJSON() {
@@ -47,6 +47,8 @@ class RPG_ComponentHealth extends Component {
         obj.getEnabledComponent(ComponentTextRenderer).text = ""+dmg;
         
         createObject(obj.toJSON());
+        
+        console.log("Create Object",obj);
         
         if(this.HP <= 0) deleteObject(this.gameObject.id);
         

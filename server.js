@@ -51,6 +51,7 @@ var idGenerator = 0;
 
 /// Copy client's requirement
 global.objectList = objectList;
+global.playerMap = playerMap;
 global.isServer = true;
 global.generateNewId = function() {
     return "SERV_"+(idGenerator++);
@@ -243,6 +244,7 @@ io.on('connection',function (socket) {
         }
     });
     socket.on('callOnOwner',function(data) { // [Client --> Server] relay call to client (or server) who is the owner
+        console.log("call on owner",data);
         var obj = getObjectFromId(data.objId);
         if(obj == null) return;
         for(var comp of obj.components) {

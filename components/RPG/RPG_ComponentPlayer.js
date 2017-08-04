@@ -87,13 +87,17 @@ if(!isServer) {
                 // click on this object , attack !
                 if(obj.getEnabledComponent(RPG_ComponentHealth) == null) continue; // Can only attack object with health
                 
-                // just attack (test)
-                console.log("ATTACK",obj);
-                obj.getEnabledComponent(RPG_ComponentHealth).callOnOwner('takeDamage',10);
+                playerObject.getEnabledComponent(RPG_ComponentAttack).setAttackTarget(obj.id);
 
                 break;
             }
         }
     }
     canvas.addEventListener("mousedown",onMouseDown_player);
+    
+    function onMouseUp_player(e) {
+        if(e.button != 0) return true; // only capture left click
+        playerObject.getEnabledComponent(RPG_ComponentAttack).setAttackTarget(null);
+    }
+    canvas.addEventListener("mouseup",onMouseUp_player);
 }

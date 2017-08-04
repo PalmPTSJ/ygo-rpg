@@ -132,6 +132,21 @@ class GameObject extends EmptyPrefab {
         
         this.ownerId = null;
     }
+    
+    toJSON() {
+        return Object.assign(super.toJSON(),{
+            ownerId : this.ownerId
+        });
+    }
+    
+    fromJSON(data) {
+        super.fromJSON(data);
+        
+        if(data.ownerId !== undefined) this.ownerId = data.ownerId;
+        
+        return this;
+    }
+    
     update(timestamp) {
         for(var comp of this.components) {
             comp.onUpdate(timestamp);
