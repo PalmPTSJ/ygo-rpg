@@ -1,0 +1,30 @@
+{
+  "name": "ygo-rpg",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "directories": {
+    "doc": "docs",
+    "lib": "lib"
+  },
+  "dependencies": {
+    "commander": "^2.11.0",
+    "socket.io": "^1.7.4",
+    "vm": "^0.1.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "node server.js",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PalmPTSJ/ygo-rpg.git"
+  },
+  "author": "PalmPTSJ",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/PalmPTSJ/ygo-rpg/issues"
+  },
+  "homepage": "https://github.com/PalmPTSJ/ygo-rpg#readme"
+}
