@@ -48,7 +48,7 @@ class RPG_ComponentHealth extends Component {
         
         createObject(obj.toJSON());
         
-        console.log("Create Object",obj);
+        //console.log("Create Object",obj);
         
         if(this.HP <= 0) deleteObject(this.gameObject.id);
         

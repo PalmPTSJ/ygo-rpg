@@ -41,7 +41,9 @@ function getDebugName(socket) { return "<"+socket.playerData.name+":"+socket.pla
 
 var objectList = [];
 var prefabList = {};
-var playerMap = {};
+var playerMap = {}; // Map [id] -> data = {socket , ...}
+
+var playerSavedData = {}; // each player save file
 
 var objectIdGenerator = 0;
 var prefabIdGenerator = 0;
@@ -52,6 +54,7 @@ var idGenerator = 0;
 /// Copy client's requirement
 global.objectList = objectList;
 global.playerMap = playerMap;
+global.playerSavedData = playerSavedData;
 global.isServer = true;
 global.generateNewId = function() {
     return "SERV_"+(idGenerator++);
@@ -213,6 +216,7 @@ io.on('connection',function (socket) {
                     obj.getEnabledComponent(RPG_ComponentPlayer).username == socket.loginData.username) 
                 {
                     obj.getEnabledComponent(RPG_ComponentPlayer).onLogout();
+                    global.deleteObject(obj.id);
                 }
             }
         }
@@ -244,7 +248,7 @@ io.on('connection',function (socket) {
         }
     });
     socket.on('callOnOwner',function(data) { // [Client --> Server] relay call to client (or server) who is the owner
-        console.log("call on owner",data);
+        //console.log("call on owner",data);
         var obj = getObjectFromId(data.objId);
         if(obj == null) return;
         for(var comp of obj.components) {
@@ -272,27 +276,33 @@ io.on('connection',function (socket) {
         socket.loginData = data;
         log("New user login : "+data.username);
         // check if there exists player with username
-        let exists = false;
+        
         for(let obj of objectList) {
             if( obj.getEnabledComponent(RPG_ComponentPlayer) && 
                 obj.getEnabledComponent(RPG_ComponentPlayer).username == socket.loginData.username) 
             {
-                socket.emit('setPlayerObject',{id : obj.id});
+                // duplicated login
+                log("DUPLICATED LOGIN");
+                return;
+                /*socket.emit('setPlayerObject',{id : obj.id});
                 obj.getEnabledComponent(RPG_ComponentPlayer).server_socket = socket;
                 exists = true;
-                break;
+                break;*/
             }
         }
-        if(!exists) {
+        
+        // check saved game file
+        let playerJSON = playerSavedData[data.username];
+        if(playerSavedData[data.username] === undefined) {
             // create new player
-            let player = playerPrefab.instantiate();
-            player.getEnabledComponent(RPG_ComponentPlayer).username = data.username;
-            player.getComponentByName("playerNameRenderer").text = data.username;
-            let id = createObject(player.toJSON());
-            getObjectFromId(id).getEnabledComponent(RPG_ComponentPlayer).server_socket = socket;
-            
-            socket.emit('setPlayerObject',{id : id});
+            let newPlayer = playerPrefab.instantiate();
+            newPlayer.getEnabledComponent(RPG_ComponentPlayer).onCreate(data.username);
+            playerJSON = newPlayer.toJSON();
         }
+        
+        let id = createObject(playerJSON);
+        getObjectFromId(id).getEnabledComponent(RPG_ComponentPlayer).server_socket = socket;
+        socket.emit('setPlayerObject',{id : id});
     });
 });
 
@@ -318,13 +328,57 @@ playerPrefab.addComponent((new ComponentTextRenderer("playerNameRenderer")).from
     text : "???",
     font : "16px Arial"
 }));
-
 playerPrefab.addComponent(new ComponentCursorCollider());
-
 playerPrefab.addComponent(new RPG_ComponentPlayer());
 playerPrefab.addComponent(new RPG_ComponentUIRenderer());
-
 playerPrefab.addComponent(new RPG_ComponentHealth());
 playerPrefab.addComponent(new RPG_ComponentHealthRenderer());
+playerPrefab.addComponent((new RPG_ComponentAttack()).fromJSON({
+    attackRange : 300
+}));
 
-playerPrefab.addComponent(new RPG_ComponentAttack());
+
+var enemyPrefab = new Prefab();
+enemyPrefab.deleteComponent(enemyPrefab.getComponent(ComponentTransform));
+enemyPrefab.addComponent( (new ComponentTransformTween()).fromJSON({
+    pos     : {x:0,y:0,z:2},
+    size    : {width:30,height:30},
+    moveSpeed : 2
+}));
+/*enemyPrefab.addComponent((new ComponentImageRenderer()).fromJSON({
+    url : "https://static.giantbomb.com/uploads/original/0/4389/1263712-yami_yugi.gif"
+}));*/
+enemyPrefab.addComponent((new ComponentRectRenderer()).fromJSON({
+    color : "#F00"
+}));
+enemyPrefab.addComponent((new ComponentTextRenderer("nameRenderer")).fromJSON({
+    text : "Enemy",
+    font : "16px Arial"
+}));
+enemyPrefab.addComponent(new ComponentCursorCollider());
+enemyPrefab.addComponent((new RPG_ComponentEnemy()).fromJSON({
+    aggroRange : 300,
+    unaggroRange : 500
+}));
+enemyPrefab.addComponent((new RPG_ComponentHealth()).fromJSON({
+    HP : 50,
+    maxHP : 50
+}));
+enemyPrefab.addComponent(new RPG_ComponentHealthRenderer());
+enemyPrefab.addComponent((new RPG_ComponentAttack()).fromJSON({
+    attackRange : 30
+}));
+
+
+var enemySpawnerPrefab = new Prefab();
+enemySpawnerPrefab.addComponent(new RPG_ComponentEnemySpawner());
+
+
+var enemySpawner1 = enemySpawnerPrefab.instantiate();
+enemySpawner1.getEnabledComponent(RPG_ComponentEnemySpawner).fromJSON({
+    enemyData : enemyPrefab.toJSON(),
+    spawnRate : {min:5,max:10},
+    amount : 2,
+    spawnArea : {x:100, y:100, width:300, height:300}
+});
+global.createObject(enemySpawner1.toJSON());

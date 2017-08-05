@@ -5,7 +5,7 @@ class RPG_ComponentAttack extends Component {
         super(name);
         this.attackSpeed = 1.5;
         this.attackDamage = {min:5,max:30};
-        this.attackRange = 300;
+        this.attackRange = 200;
         this.attackTargetId = null;
         
         // Server's parameter
@@ -39,36 +39,8 @@ class RPG_ComponentAttack extends Component {
         
     }
     
-    onUpdate(timestamp) {
-        if(!super.onUpdate(timestamp)) return false;
-        
-        let transform = this.gameObject.getEnabledComponent(ComponentTransform);
-        
-        this.attackTarget = getObjectFromId(this.attackTargetId);
-        if(this.attackTarget != null) {
-            let myPos = transform.pos;
-            let targetPos = this.attackTarget.getEnabledComponent(ComponentTransform).pos;
-            // draw attack target line
-            ctx.save();
-            if(Math.hypot(myPos.x-targetPos.x,myPos.y-targetPos.y) <= this.attackRange) {
-                ctx.strokeStyle = "#BB0";
-            }
-            else {
-                ctx.strokeStyle = "#F00";
-            }
-            ctx.globalAlpha = 0.6;
-            ctx.beginPath();
-            ctx.moveTo(myPos.x,myPos.y);
-            ctx.lineTo(targetPos.x,targetPos.y);
-            ctx.stroke();
-            
-            ctx.fillStyle = "#F00"
-            ctx.fillRect(targetPos.x-5,targetPos.y-5,10,10);
-            
-            ctx.restore();
-        }
-        
-        if(this.gameObject == playerObject) { // Owner
+    onUpdate_tryAttack() {
+        if(this.gameObject.isOwner()) { // Owner
             if(this.attackCooldown > 0) this.attackCooldown--;
             this.attackTarget = getObjectFromId(this.attackTargetId);
             if(this.attackTarget == null) {
@@ -91,6 +63,40 @@ class RPG_ComponentAttack extends Component {
                 }
             }
         }
+    }
+    
+    onUpdate(timestamp) {
+        if(!super.onUpdate(timestamp)) return false;
+        
+        let transform = this.gameObject.getEnabledComponent(ComponentTransform);
+        
+        this.attackTarget = getObjectFromId(this.attackTargetId);
+        if(this.attackTarget != null && this.gameObject.getEnabledComponent(RPG_ComponentPlayer) != null) { // render attack line if player
+            let myPos = transform.pos;
+            let targetPos = this.attackTarget.getEnabledComponent(ComponentTransform).pos;
+            // draw attack target line
+            ctx.save();
+            if(Math.hypot(myPos.x-targetPos.x,myPos.y-targetPos.y) <= this.attackRange) {
+                ctx.strokeStyle = "#0B0";
+                ctx.fillStyle = "#0B0"
+            }
+            else {
+                ctx.strokeStyle = "#F00";
+                ctx.fillStyle = "#F00"
+            }
+            ctx.globalAlpha = 0.6;
+            ctx.beginPath();
+            ctx.moveTo(myPos.x,myPos.y);
+            ctx.lineTo(targetPos.x,targetPos.y);
+            ctx.stroke();
+            
+            
+            ctx.fillRect(targetPos.x-3,targetPos.y-3,6,6);
+            
+            ctx.restore();
+        }
+        
+        this.onUpdate_tryAttack();
 
         return true;
     }
@@ -103,7 +109,9 @@ class RPG_ComponentAttack extends Component {
     
     onServerUpdate(timestamp) {
         if(!super.onServerUpdate(timestamp)) return false;
-
+        
+        this.onUpdate_tryAttack();
+        
         return true;
     }
 

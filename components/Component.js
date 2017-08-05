@@ -90,7 +90,7 @@ class Component extends Base {
                     });
                 }
                 else {
-                    log("Can't find owner of "+this.gameObject.id+" ("+this.gameObject.ownerId+")");
+                    console.log("Can't find owner of "+this.gameObject.id+" ("+this.gameObject.ownerId+")");
                 }
             }
         }

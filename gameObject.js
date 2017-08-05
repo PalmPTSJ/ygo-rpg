@@ -180,6 +180,15 @@ class GameObject extends EmptyPrefab {
         }
     }
     
+    isOwner() {
+        // check if this client is the owner
+        if(isServer) {
+            return this.ownerId == null;
+        }
+        else {
+            return this.ownerId == myPlayerInfo.id;
+        }
+    }
 }
 
 var classList = {

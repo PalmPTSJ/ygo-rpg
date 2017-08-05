@@ -61,6 +61,17 @@ class RPG_ComponentPlayer extends Component {
     onLogout() { // server
         this.online = false;
         this.server_socket = null;
+        
+        playerSavedData[this.username] = this.gameObject.toJSON();
+    }
+    
+    onCreate(username) { // [SERVER] on create new character
+        this.username = username;
+        this.gameObject.getComponentByName("playerNameRenderer").text = username;
+    }
+    
+    onLogin() { // DEPRECATED
+        this.online = true;
     }
     
     onKeyDown(key) {
