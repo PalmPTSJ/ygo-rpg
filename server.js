@@ -324,18 +324,18 @@ playerPrefab.getComponent(ComponentTransform).fromJSON({
 playerPrefab.addComponent((new ComponentImageRenderer()).fromJSON({
     url : "https://static.giantbomb.com/uploads/original/0/4389/1263712-yami_yugi.gif"
 }));
-playerPrefab.addComponent((new ComponentTextRenderer("playerNameRenderer")).fromJSON({
-    text : "???",
-    font : "16px Arial"
-}));
+
 playerPrefab.addComponent(new ComponentCursorCollider());
-playerPrefab.addComponent(new RPG_ComponentPlayer());
-playerPrefab.addComponent(new RPG_ComponentUIRenderer());
+playerPrefab.addComponent(new RPG_ComponentCharacter());
+playerPrefab.addComponent(new RPG_ComponentNameRenderer());
 playerPrefab.addComponent(new RPG_ComponentHealth());
 playerPrefab.addComponent(new RPG_ComponentHealthRenderer());
 playerPrefab.addComponent((new RPG_ComponentAttack()).fromJSON({
     attackRange : 300
 }));
+playerPrefab.addComponent(new RPG_ComponentPlayer());
+playerPrefab.addComponent(new RPG_ComponentUIRenderer());
+
 
 
 var enemyPrefab = new Prefab();
@@ -351,15 +351,13 @@ enemyPrefab.addComponent( (new ComponentTransformTween()).fromJSON({
 enemyPrefab.addComponent((new ComponentRectRenderer()).fromJSON({
     color : "#F00"
 }));
-enemyPrefab.addComponent((new ComponentTextRenderer("nameRenderer")).fromJSON({
-    text : "Enemy",
-    font : "16px Arial"
-}));
 enemyPrefab.addComponent(new ComponentCursorCollider());
-enemyPrefab.addComponent((new RPG_ComponentEnemy()).fromJSON({
-    aggroRange : 300,
-    unaggroRange : 500
+
+enemyPrefab.addComponent((new RPG_ComponentCharacter()).fromJSON({
+    characterName : "Enemy",
+    level : 1
 }));
+enemyPrefab.addComponent(new RPG_ComponentNameRenderer());
 enemyPrefab.addComponent((new RPG_ComponentHealth()).fromJSON({
     HP : 50,
     maxHP : 50
@@ -367,6 +365,10 @@ enemyPrefab.addComponent((new RPG_ComponentHealth()).fromJSON({
 enemyPrefab.addComponent(new RPG_ComponentHealthRenderer());
 enemyPrefab.addComponent((new RPG_ComponentAttack()).fromJSON({
     attackRange : 30
+}));
+enemyPrefab.addComponent((new RPG_ComponentEnemy()).fromJSON({
+    aggroRange : 300,
+    unaggroRange : 500
 }));
 
 

@@ -2,8 +2,8 @@ class RPG_ComponentCardDeck extends Component {
     constructor(name) {
         super();
         
-        this.deck = []; // Deck card list (recipe)
-        this.currentDeck = []; // Current playing deck
+        this.deck = []; // Deck card list (recipe) , by id
+        this.currentDeck = []; // Current playing deck , by id
         this.drawCooldown = 1800;
         this.startingHand = 5;
         
@@ -29,7 +29,10 @@ class RPG_ComponentCardDeck extends Component {
     }
     
     draw() {
-        
+        if(this.currentDeck.length == 0) return;
+        let cm = this.gameObject.getEnabledComponent(RPG_ComponentCardManager);
+        cm.addCardToHand(this.currentDeck[0]);
+        this.currentDeck.splice(0,1);
     }
     
     shuffle(arr) {
@@ -61,12 +64,12 @@ class RPG_ComponentCardDeck extends Component {
         if(this.gameObject.isOwner()) {
             // if playing
             let cardManager = this.gameObject.getEnabledComponent(RPG_ComponentCardManager);
-            if(cardManager.isPlaying()) {
+            if(cardManager.isPlaying() && cardManager.getCardCount() <= 5) {
                 // countdown until draw next card
                 this.countdown--;
                 if(this.countdown <= 0) {
                     // draw
-                    draw();
+                    this.draw();
                     this.countdown = this.drawCooldown;
                 }
             }

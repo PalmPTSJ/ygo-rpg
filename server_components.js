@@ -41,6 +41,9 @@ module.exports = function(context) {
     importFile("components/RPG/RPG_ComponentUIRenderer.js");
     importFile("components/RPG/RPG_ComponentHealthRenderer.js");
     
+    importFile("components/RPG/RPG_ComponentCharacter.js");
+    importFile("components/RPG/RPG_ComponentNameRenderer.js");
+    
     importFile("components/RPG/RPG_ComponentPlayerControllable.js");
     importFile("components/RPG/RPG_ComponentDropTable.js");
     

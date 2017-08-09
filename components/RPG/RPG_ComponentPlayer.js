@@ -67,16 +67,13 @@ class RPG_ComponentPlayer extends Component {
     
     onCreate(username) { // [SERVER] on create new character
         this.username = username;
-        this.gameObject.getComponentByName("playerNameRenderer").text = username;
-    }
-    
-    onLogin() { // DEPRECATED
-        this.online = true;
+        //this.gameObject.getComponentByName("playerNameRenderer").text = username;
+        let character = this.gameObject.getEnabledComponent(RPG_ComponentCharacter);
+        character.characterName = username;
     }
     
     onKeyDown(key) {
         super.onKeyDown(key);
-        
     }
     
 }

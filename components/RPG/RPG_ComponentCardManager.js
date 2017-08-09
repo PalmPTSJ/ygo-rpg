@@ -1,40 +1,39 @@
-class RPG_ComponentUIRenderer extends ComponentRenderer {
+class RPG_ComponentCardManager extends Component {
     constructor(name) {
         super();
+        
+        this.hand = [];
+        
     }
-    /*toJSON() {
+    toJSON() {
         return Object.assign(super.toJSON(),{
-            username : this.username,
-            online : this.online
+            hand : this.hand,
         });
     }
     fromJSON(data) {
         super.fromJSON(data);
         
-        if(data.username !== undefined) this.username = data.username;
-        if(data.online !== undefined) this.online = data.online;
+        if(data.hand !== undefined) this.hand = data.hand;
         
         return this;
-    }*/
+    }
     
-    render() {
-        let player = this.gameObject.getEnabledComponent(RPG_ComponentPlayer);
-        
-        if(!player || playerObject != player.gameObject) return; // render only for owner
-        
-        ctx.save();
-        ctx.resetTransform();
-        ctx.font = "24px Roboto";
-        ctx.fillText("Lv 1",150,120);
-        ctx.fillText(""+player.username,250,120);
-        
-        ctx.beginPath();
-        ctx.arc(75,75,50,0,Math.PI*2);
-        ctx.stroke();
-
-        ctx.restore();
+    isPlaying() {
+        return true;
+    }
+    
+    getCardCount() {
+        return this.hand.length;
+    }
+    
+    addCardToHand(cardId) {
+        this.hand.push(cardId);
+    }
+    
+    onUpdate(timestamp) {
+        if(!super.onUpdate(timestamp)) return false;
     }
     
 }
 
-classList["RPG_ComponentUIRenderer"] = RPG_ComponentUIRenderer;
+classList["RPG_ComponentCardManager"] = RPG_ComponentCardManager;
