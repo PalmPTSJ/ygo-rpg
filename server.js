@@ -315,10 +315,23 @@ function update() {
 
 var gameInterval = setInterval(update,1000/60);
 
+// create map
+function createMap(imageName,x,y,width,height) {
+    let mapPrefab = new PrefabStaticImage("",imageName);
+    let mapObj = mapPrefab.instantiate();
+    mapObj.getEnabledComponent(ComponentTransform).fromJSON({
+        pos : {x:x, y:y, z:-100},
+        size : {width:width, height:height}
+    });
+    global.createObject(mapObj.toJSON());
+}
+
+createMap("resources/map/map_footballField.jpg",0,0,1600,1600);
+
 // create prefab
 var playerPrefab = new Prefab();
 playerPrefab.getComponent(ComponentTransform).fromJSON({
-    pos     : {x:0,y:0,z:2},
+    pos     : {x:800,y:1400,z:2},
     size    : {width:60,height:40}
 });
 playerPrefab.addComponent((new ComponentImageRenderer()).fromJSON({
@@ -379,8 +392,8 @@ enemySpawnerPrefab.addComponent(new RPG_ComponentEnemySpawner());
 var enemySpawner1 = enemySpawnerPrefab.instantiate();
 enemySpawner1.getEnabledComponent(RPG_ComponentEnemySpawner).fromJSON({
     enemyData : enemyPrefab.toJSON(),
-    spawnRate : {min:5,max:10},
-    amount : 2,
-    spawnArea : {x:100, y:100, width:300, height:300}
+    spawnRate : {min:3,max:6},
+    amount : 4,
+    spawnArea : {x:200, y:200, width:1200, height:600}
 });
 global.createObject(enemySpawner1.toJSON());

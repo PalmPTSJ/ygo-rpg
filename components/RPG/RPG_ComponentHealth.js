@@ -50,7 +50,10 @@ class RPG_ComponentHealth extends Component {
         
         //console.log("Create Object",obj);
         
-        if(this.HP <= 0) deleteObject(this.gameObject.id);
+        if(this.HP <= 0) {
+            if(isServer)
+                deleteObject(this.gameObject.id);
+        }
         
     }
 
