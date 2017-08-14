@@ -1,21 +1,7 @@
 class RPG_ComponentUIRenderer extends ComponentRenderer {
     constructor(name) {
-        super();
+        super(name);
     }
-    /*toJSON() {
-        return Object.assign(super.toJSON(),{
-            username : this.username,
-            online : this.online
-        });
-    }
-    fromJSON(data) {
-        super.fromJSON(data);
-        
-        if(data.username !== undefined) this.username = data.username;
-        if(data.online !== undefined) this.online = data.online;
-        
-        return this;
-    }*/
     
     render() {
         let player = this.gameObject.getEnabledComponent(RPG_ComponentPlayer);

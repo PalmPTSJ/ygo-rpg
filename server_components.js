@@ -11,6 +11,7 @@ module.exports = function(context) {
     ctx = context;
     importFile("gameObject.js");
     importFile("prefabTemplate.js");
+    importFile("card.js");
 
     importFile("components/Component.js");
     importFile("components/ComponentTransform.js");
@@ -43,6 +44,10 @@ module.exports = function(context) {
     
     importFile("components/RPG/RPG_ComponentCharacter.js");
     importFile("components/RPG/RPG_ComponentNameRenderer.js");
+    
+    importFile("components/RPG/RPG_ComponentCardDeck.js");
+    importFile("components/RPG/RPG_ComponentCardManager.js");
+    importFile("components/RPG/RPG_ComponentCardRenderer.js");
     
     importFile("components/RPG/RPG_ComponentPlayerControllable.js");
     importFile("components/RPG/RPG_ComponentDropTable.js");

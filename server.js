@@ -348,8 +348,11 @@ playerPrefab.addComponent((new RPG_ComponentAttack()).fromJSON({
 }));
 playerPrefab.addComponent(new RPG_ComponentPlayer());
 playerPrefab.addComponent(new RPG_ComponentUIRenderer());
-
-
+playerPrefab.addComponent(new RPG_ComponentCardManager());
+playerPrefab.addComponent((new RPG_ComponentCardDeck()).fromJSON({
+    deck : ["card_1","card_1","card_1","card_2","card_2"]
+}));
+playerPrefab.addComponent(new RPG_ComponentCardRenderer());
 
 var enemyPrefab = new Prefab();
 enemyPrefab.deleteComponent(enemyPrefab.getComponent(ComponentTransform));

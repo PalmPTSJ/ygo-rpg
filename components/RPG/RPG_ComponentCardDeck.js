@@ -4,7 +4,8 @@ class RPG_ComponentCardDeck extends Component {
         
         this.deck = []; // Deck card list (recipe) , by id
         this.currentDeck = []; // Current playing deck , by id
-        this.drawCooldown = 1800;
+        this.drawCooldown = 120;
+        this.deckInitCooldown = 240;
         this.startingHand = 5;
         
         this.countdown = 0; // [LOCAL]
@@ -30,6 +31,7 @@ class RPG_ComponentCardDeck extends Component {
     
     draw() {
         if(this.currentDeck.length == 0) return;
+        console.log("Draw",this.currentDeck);
         let cm = this.gameObject.getEnabledComponent(RPG_ComponentCardManager);
         cm.addCardToHand(this.currentDeck[0]);
         this.currentDeck.splice(0,1);
@@ -44,11 +46,9 @@ class RPG_ComponentCardDeck extends Component {
         }
     }
     
-    onStartPlaying() {
-        // intialize deck
-        
-        // copy cards ???
-        this.currentDeck = this.deck;
+    initializeDeck() {
+        this.currentDeck = [];
+        for(let cardId of this.deck) this.currentDeck.push(cardId);
         
         for (let i = this.currentDeck.length; i; i--) {
             let j = Math.floor(Math.random() * i);
@@ -58,19 +58,38 @@ class RPG_ComponentCardDeck extends Component {
         }
     }
     
+    onStartPlaying() {
+        this.initializeDeck();
+    }
+    
     onUpdate(timestamp) {
         if(!super.onUpdate(timestamp)) return false;
         
         if(this.gameObject.isOwner()) {
             // if playing
-            let cardManager = this.gameObject.getEnabledComponent(RPG_ComponentCardManager);
-            if(cardManager.isPlaying() && cardManager.getCardCount() <= 5) {
-                // countdown until draw next card
-                this.countdown--;
-                if(this.countdown <= 0) {
-                    // draw
-                    this.draw();
-                    this.countdown = this.drawCooldown;
+            let cm = this.gameObject.getEnabledComponent(RPG_ComponentCardManager);
+            if(cm.isPlaying()) {
+                if(this.currentDeck.length == 0) {
+                    // deck init
+                    this.countdown--;
+                    if(this.countdown <= 0) {
+                        this.initializeDeck();
+                        this.countdown = this.drawCooldown;
+                    }
+                }
+                else if (cm.getCardCount() <= 5) {
+                    // countdown until draw next card
+                    this.countdown--;
+                    if(this.countdown <= 0) {
+                        // draw
+                        this.draw();
+                        if(this.currentDeck.length == 0) {
+                            this.countdown = this.deckInitCooldown;
+                        }
+                        else {
+                            this.countdown = this.drawCooldown;
+                        }
+                    }
                 }
             }
         }

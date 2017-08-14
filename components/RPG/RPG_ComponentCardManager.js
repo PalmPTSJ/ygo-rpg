@@ -2,6 +2,7 @@ class RPG_ComponentCardManager extends Component {
     constructor(name) {
         super();
         
+        this.playing = false;
         this.hand = [];
         
     }
@@ -19,7 +20,7 @@ class RPG_ComponentCardManager extends Component {
     }
     
     isPlaying() {
-        return true;
+        return this.playing;
     }
     
     getCardCount() {
@@ -28,10 +29,19 @@ class RPG_ComponentCardManager extends Component {
     
     addCardToHand(cardId) {
         this.hand.push(cardId);
+        console.log("Card added",cardId);
     }
     
     onUpdate(timestamp) {
         if(!super.onUpdate(timestamp)) return false;
+        if(!this.playing) {
+            // just play
+            let deck = this.gameObject.getEnabledComponent(RPG_ComponentCardDeck);
+            deck.onStartPlaying();
+            
+            this.playing = true;
+        }
+        
     }
     
 }
