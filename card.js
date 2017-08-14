@@ -48,7 +48,8 @@ card1.img.src = "resources/card/cardImage/card_1.png";
 card1.name = "Heal";
 card1.effectText = "Heals 100 HP. [EV]";
 card1.activate = function(cm) {
-    cm.gameObject.getComponent(RPG_ComponentHealth).HP += 100;
+    let health = cm.gameObject.getComponent(RPG_ComponentHealth);
+    health.HP = Math.min(health.HP+100,health.maxHP);
 };
 
 
@@ -56,9 +57,20 @@ card1.activate = function(cm) {
 let card2 = new Card();
 card2.id = "card_2";
 card2.name = "Black hole";
-card2.effectText = "Deals 100 damage to enemy in 900 radius.";
+card2.effectText = "Deals 100 damage to everything in 900 radius";
 card2.activate = function(cm) {
-    // gg
+    // find anything with health around
+    for(let obj of objectList) {
+        let health = obj.getEnabledComponent(RPG_ComponentHealth);
+        if(health) {
+            let transform = obj.getEnabledComponent(ComponentTransform);
+            let myTransform = cm.gameObject.getComponent(ComponentTransform);
+            if(Math.hypot(myTransform.pos.x-transform.pos.x,myTransform.pos.y-transform.pos.y) <= 900) {
+                health.callOnOwner('takeDamage',100); // deal damage
+            }
+        }
+    }
+    
 };
 card2.img.src = "resources/card/cardImage/card_2.png";
 

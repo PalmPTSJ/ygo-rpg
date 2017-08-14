@@ -3,7 +3,7 @@ class RPG_ComponentCardManager extends Component {
         super();
         
         this.playing = false;
-        this.hand = [];
+        this.hand = [null, null, null, null, null];
         
     }
     toJSON() {
@@ -28,18 +28,36 @@ class RPG_ComponentCardManager extends Component {
     }
     
     addCardToHand(cardId) {
-        this.hand.push(cardId);
-        console.log("Card added",cardId);
+        for(let i = 0;i < 5;i++) {
+            if(this.hand[i] == null) {
+                // replace there
+                this.hand[i] = cardId;
+                break;
+            }
+        }
     }
     
     onUpdate(timestamp) {
         if(!super.onUpdate(timestamp)) return false;
-        if(!this.playing) {
-            // just play
-            let deck = this.gameObject.getEnabledComponent(RPG_ComponentCardDeck);
-            deck.onStartPlaying();
-            
-            this.playing = true;
+        if(this.gameObject.isOwner()) {
+            if(!this.playing) {
+                // just play
+                let deck = this.gameObject.getEnabledComponent(RPG_ComponentCardDeck);
+                deck.onStartPlaying();
+                
+                this.playing = true;
+            }
+            // card activation
+            for(let cardSlot = 0;cardSlot < 5;cardSlot++) {
+                if(isKeyDown[(''+(cardSlot+1)).charCodeAt(0)]) {
+                    // activate card at hand that card slot
+                    if(this.hand[cardSlot] != null) {
+                        // activate
+                        cardList[this.hand[cardSlot]].activate(this);
+                        this.hand[cardSlot] = null;
+                    }
+                }
+            }
         }
         
     }

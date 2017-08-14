@@ -10,11 +10,17 @@ class RPG_ComponentNameRenderer extends ComponentRenderer {
         ctx.save();
         transform.setupCanvas();
         
-        ctx.font = "16px Arial";
+        ctx.font = "20px Arial";
         ctx.textAlign = "center";
         ctx.textBaseline = "top"; 
         
-        ctx.fillText("[Lv " + character.level + "] " + character.characterName,transform.size.width/2,transform.size.height + 10);
+        let txt = "[Lv " + character.level + "] " + character.characterName;
+        
+        ctx.fillStyle = "#FFF"
+        ctx.fillText(txt,transform.size.width/2,transform.size.height + 10);
+        
+        ctx.strokeStyle = "#000"
+        ctx.strokeText(txt,transform.size.width/2,transform.size.height + 10);
         
         ctx.restore();
     }

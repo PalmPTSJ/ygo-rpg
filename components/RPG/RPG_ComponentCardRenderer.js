@@ -19,12 +19,13 @@ class RPG_ComponentCardRenderer extends ComponentRenderer {
         
         // draw deck
         if(deck.currentDeck.length > 0)
-            ctx.drawImage(this.cardBackImg,canvas.width-80,canvas.height-110,60,90);
+            ctx.drawImage(this.cardBackImg,canvas.width-100,canvas.height-140,80,120);
         
         // draw hand
         
         for(let i = 0;i < cm.hand.length;i++) {
-            ctx.drawImage(cardList[cm.hand[i]].img,canvas.width-80-80*(i+1),canvas.height-110,60,90);
+            if(cm.hand[i] != null)
+                ctx.drawImage(cardList[cm.hand[i]].img,canvas.width-600+100*(i),canvas.height-140,80,120);
         }
         
         ctx.restore();

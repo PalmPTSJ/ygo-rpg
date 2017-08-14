@@ -77,7 +77,7 @@ class RPG_ComponentCardDeck extends Component {
                         this.countdown = this.drawCooldown;
                     }
                 }
-                else if (cm.getCardCount() <= 5) {
+                else if (cm.getCardCount() < 5) {
                     // countdown until draw next card
                     this.countdown--;
                     if(this.countdown <= 0) {

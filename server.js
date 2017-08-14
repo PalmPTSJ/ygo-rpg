@@ -350,7 +350,7 @@ playerPrefab.addComponent(new RPG_ComponentPlayer());
 playerPrefab.addComponent(new RPG_ComponentUIRenderer());
 playerPrefab.addComponent(new RPG_ComponentCardManager());
 playerPrefab.addComponent((new RPG_ComponentCardDeck()).fromJSON({
-    deck : ["card_1","card_1","card_1","card_2","card_2"]
+    deck : ["card_1","card_1","card_1","card_2","card_2","card_2"]
 }));
 playerPrefab.addComponent(new RPG_ComponentCardRenderer());
 
@@ -361,14 +361,10 @@ enemyPrefab.addComponent( (new ComponentTransformTween()).fromJSON({
     size    : {width:30,height:30},
     moveSpeed : 2
 }));
-/*enemyPrefab.addComponent((new ComponentImageRenderer()).fromJSON({
-    url : "https://static.giantbomb.com/uploads/original/0/4389/1263712-yami_yugi.gif"
-}));*/
-enemyPrefab.addComponent((new ComponentRectRenderer()).fromJSON({
-    color : "#F00"
-}));
+enemyPrefab.addComponent((new ComponentImageRenderer().fromJSON({
+    url : "http://simpleicon.com/wp-content/uploads/football-256x256.png"
+})));
 enemyPrefab.addComponent(new ComponentCursorCollider());
-
 enemyPrefab.addComponent((new RPG_ComponentCharacter()).fromJSON({
     characterName : "Enemy",
     level : 1
@@ -397,6 +393,46 @@ enemySpawner1.getEnabledComponent(RPG_ComponentEnemySpawner).fromJSON({
     enemyData : enemyPrefab.toJSON(),
     spawnRate : {min:3,max:6},
     amount : 4,
-    spawnArea : {x:200, y:200, width:1200, height:600}
+    spawnArea : {x:200, y:200, width:600, height:600}
 });
 global.createObject(enemySpawner1.toJSON());
+
+
+
+var enemyPrefab2 = new Prefab();
+enemyPrefab2.deleteComponent(enemyPrefab2.getComponent(ComponentTransform));
+enemyPrefab2.addComponent( (new ComponentTransformTween()).fromJSON({
+    pos     : {x:0,y:0,z:2},
+    size    : {width:30,height:30},
+    moveSpeed : 2
+}));
+enemyPrefab2.addComponent((new ComponentImageRenderer().fromJSON({
+    url : "http://simpleicon.com/wp-content/uploads/football-256x256.png"
+})));
+enemyPrefab2.addComponent(new ComponentCursorCollider());
+enemyPrefab2.addComponent((new RPG_ComponentCharacter()).fromJSON({
+    characterName : "Boss",
+    level : 10
+}));
+enemyPrefab2.addComponent(new RPG_ComponentNameRenderer());
+enemyPrefab2.addComponent((new RPG_ComponentHealth()).fromJSON({
+    HP : 500,
+    maxHP : 500
+}));
+enemyPrefab2.addComponent(new RPG_ComponentHealthRenderer());
+enemyPrefab2.addComponent((new RPG_ComponentAttack()).fromJSON({
+    attackRange : 60
+}));
+enemyPrefab2.addComponent((new RPG_ComponentEnemy()).fromJSON({
+    aggroRange : 400,
+    unaggroRange : 600
+}));
+
+var enemySpawner2 = enemySpawnerPrefab.instantiate();
+enemySpawner2.getEnabledComponent(RPG_ComponentEnemySpawner).fromJSON({
+    enemyData : enemyPrefab2.toJSON(),
+    spawnRate : {min:10,max:15},
+    amount : 1,
+    spawnArea : {x:1000, y:200, width:200, height:600}
+});
+global.createObject(enemySpawner2.toJSON());
