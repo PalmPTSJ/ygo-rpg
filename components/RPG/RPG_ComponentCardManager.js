@@ -24,7 +24,11 @@ class RPG_ComponentCardManager extends Component {
     }
     
     getCardCount() {
-        return this.hand.length;
+        let cnt = 0;
+        for(let i of this.hand) {
+            if(i != null) cnt++;
+        }
+        return cnt;
     }
     
     addCardToHand(cardId) {
